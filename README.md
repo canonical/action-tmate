@@ -1,6 +1,6 @@
 # Debug your [GitHub Actions](https://github.com/features/actions) by using [tmate](https://tmate.io)
 
-This is a forked version of (action-tmate)[https://github.com/mxschmitt/action-tmate], intended to
+This is a forked version of [action-tmate](https://github.com/mxschmitt/action-tmate), intended to
 be used with (GitHub Runner Operator)[https://github.com/canonical/github-runner-operator/] to
 provide automatic SSH debug access within the Canonical VPN.
 
