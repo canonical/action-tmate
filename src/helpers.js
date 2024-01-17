@@ -63,7 +63,8 @@ export const execShellCommand = (cmd, options) => {
  * @return {string|undefined} {undefined} or throws an error if input doesn't match regex
  */
 export const getValidatedEnvVars = (key, re) => {
-  const value = process.env[key] || ""
+  const envVarKey = key.toUpperCase().replace("_", "-")
+  const value = process.env[envVarKey] || ""
   if (value !== undefined && !re.test(value)) {
     throw new Error(`Invalid value for '${key}': '${value}'`);
   }

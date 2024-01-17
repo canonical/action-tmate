@@ -161,10 +161,10 @@ export async function run() {
     // values that are not, strictly speaking, valid, but should be good
     // enough for detecting obvious errors, which is all we want here.
     const options = {
-      "TMATE_SERVER_HOST": /^[a-z\d\-]+(\.[a-z\d\-]+)*$/i,
-      "TMATE_SERVER_PORT": /^\d{1,5}$/,
-      "TMATE_SERVER_RSA_FINGERPRINT": /./,
-      "TMATE_SERVER_ED25519_FINGERPRINT": /./,
+      "tmate-server-host": /^[a-z\d\-]+(\.[a-z\d\-]+)*$/i,
+      "tmate-server-port": /^\d{1,5}$/,
+      "tmate-server-rsa-fingerprint": /./,
+      "tmate-server-ed25519-fingerprint": /./,
     }
 
     let host = "";
@@ -172,7 +172,7 @@ export async function run() {
     for (const [key, option] of Object.entries(options)) {
       const value = getValidatedEnvVars(key, option);
       if (value !== undefined) {
-        setDefaultCommand = `${setDefaultCommand} set-option -g ${key} "${value}" \\;`;
+        setDefaultCommand = `${setDefaultCommand} set-option -g ${key.replace("_", "-")} "${value}" \\;`;
         if (key === "TMATE_SERVER_HOST") {
           host = value;
         }
