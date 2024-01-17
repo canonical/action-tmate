@@ -172,11 +172,11 @@ export async function run() {
     for (const [key, option] of Object.entries(options)) {
       const value = getValidatedEnvVars(key, option);
       if (value !== undefined) {
-        setDefaultCommand = `${setDefaultCommand} set-option -g ${key.replace("_", "-")} "${value}" \\;`;
-        if (key === "TMATE_SERVER_HOST") {
+        setDefaultCommand = `${setDefaultCommand} set-option -g ${key} "${value}" \\;`;
+        if (key === "tmate-server-host") {
           host = value;
         }
-        if (key === "TMATE_SERVER_PORT") {
+        if (key === "tmate-server-port") {
           port = value;
         }
       }
