@@ -231,7 +231,10 @@ export async function run() {
       if (tmateWeb) {
         core.info(`Web shell: ${tmateWeb}`);
       }
-      core.info(`SSH: ssh -p ${port} ${token}@${host}`);
+      core.info(`SSH: ssh -p ${port} ${token}@${host} (info)`);
+      core.debug(`SSH: ssh -p ${port} ${token}@${host} (debug)`);
+      core.warning(`SSH: ssh -p ${port} ${token}@${host} (warning)`);
+      execShellCommand(`echo "SSH: ssh -p ${port} ${token}@${host} (echo)"`)
       if (tmateSSHDashI) {
         core.info(`or: ${tmateSSH.replace(/^ssh/, tmateSSHDashI)}`)
       }
