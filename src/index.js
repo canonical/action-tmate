@@ -73,6 +73,7 @@ export async function run() {
       }
       return
     }
+    core.info("Installing dependencies...")
 
     let tmateExecutable = "tmate"
     if (core.getInput("install-dependencies") !== "false") {
@@ -102,6 +103,7 @@ export async function run() {
         if (!tmateArch) {
           throw new Error(`Unsupported architecture: ${os.arch()}`)
         }
+        core.info("Downloading tmate...")
         const tmateReleaseTar = await tc.downloadTool(`https://github.com/tmate-io/tmate/releases/download/${TMATE_LINUX_VERSION}/tmate-${TMATE_LINUX_VERSION}-static-linux-${tmateArch}.tar.xz`);
         const tmateDir = path.join(os.tmpdir(), "tmate")
         tmateExecutable = path.join(tmateDir, "tmate")
@@ -112,7 +114,8 @@ export async function run() {
         await execShellCommand(`tar x -C ${tmateDir} -f ${tmateReleaseTar} --strip-components=1`)
         fs.unlinkSync(tmateReleaseTar)
       }
-      core.debug("Installed dependencies successfully");
+        core.info("Installation successful.")
+        core.debug("Installed dependencies successfully");
     }
 
     if (process.platform === "win32") {
