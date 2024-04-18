@@ -26,6 +26,7 @@ const TMATE_ARCH_MAP = {
 const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
 export async function run() {
+  console.log("start run")
   try {
     /*  Indicates whether the POST action is running */
     if (!!core.getState('isPost')) {
@@ -75,6 +76,7 @@ export async function run() {
     }
 
     let tmateExecutable = "tmate"
+    console.log("install deps")
     if (core.getInput("install-dependencies") !== "false") {
       core.debug("Installing dependencies")
       if (process.platform === "darwin") {
@@ -102,6 +104,7 @@ export async function run() {
         if (!tmateArch) {
           throw new Error(`Unsupported architecture: ${os.arch()}`)
         }
+        console.log("download using tmate arch: ", tmateArch)
         const tmateReleaseTar = await tc.downloadTool(`https://github.com/tmate-io/tmate/releases/download/${TMATE_LINUX_VERSION}/tmate-${TMATE_LINUX_VERSION}-static-linux-${tmateArch}.tar.xz`);
         const tmateDir = path.join(os.tmpdir(), "tmate")
         tmateExecutable = path.join(tmateDir, "tmate")
@@ -135,9 +138,11 @@ export async function run() {
       const auth = core.getInput('github-token')
       const octokit = new Octokit({ auth, baseUrl: apiUrl, request: { fetch }});
 
+      console.log("listing keys for user")
       const keys = await octokit.users.listPublicKeysForUser({
         username: actor
       })
+      console.log("keys: ", keys)
       if (keys.data.length === 0) {
         if (limitAccessToActor === "auto") publicSSHKeysWarning = `No public SSH keys found for ${actor}; continuing without them even if it is less secure (please consider adding an SSH key, see https://docs.github.com/en/authentication/connecting-to-github-with-ssh/adding-a-new-ssh-key-to-your-github-account)`
         else throw new Error(`No public SSH keys registered with ${actor}'s GitHub profile`)
@@ -182,11 +187,14 @@ export async function run() {
       }
     }
 
+    console.log("Creating new session")
     core.debug("Creating new session")
     await execShellCommand(`${tmate} ${newSessionExtra} ${setDefaultCommand} new-session -d`);
     await execShellCommand(`${tmate} wait tmate-ready`);
+    console.log("Created new session")
     core.debug("Created new session successfully")
 
+    console.log("Fetch connection strings")
     core.debug("Fetching connection strings")
     const tmateSSH = await execShellCommand(`${tmate} display -p '#{tmate_ssh}'`);
     const [ , ,tokenHost] = tmateSSH.split(" ");
@@ -251,6 +259,7 @@ export async function run() {
 
   } catch (error) {
     core.setFailed(error);
+    console.log(error)
   }
 }
 
