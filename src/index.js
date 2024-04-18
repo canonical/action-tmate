@@ -5,7 +5,6 @@ import path from "path"
 import * as core from "@actions/core"
 import * as github from "@actions/github"
 import * as tc from "@actions/tool-cache"
-import { Octokit } from "@octokit/rest"
 import process from "process"
 
 import { execShellCommand, getValidatedEnvVars, getLinuxDistro, useSudoPrefix } from "./helpers"
