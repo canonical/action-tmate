@@ -134,23 +134,19 @@ export async function run() {
     let publicSSHKeysWarning = ""
     const limitAccessToActor = core.getInput("limit-access-to-actor")
     if (limitAccessToActor === "true" || limitAccessToActor === "auto") {
-      const { actor, apiUrl } = github.context
-      const auth = core.getInput('github-token')
-      const octokit = new Octokit({ auth, baseUrl: apiUrl, request: { fetch }});
-
+      const { actor } = github.context
       console.log("listing keys for user")
-      const keys = await octokit.users.listPublicKeysForUser({
-        username: actor
-      })
+      const response = await fetch(`https://api.github.com/users/${actor}/keys`);
+      const keys = await response.json()
       console.log("keys: ", keys)
-      if (keys.data.length === 0) {
+      if (keys.length === 0) {
         if (limitAccessToActor === "auto") publicSSHKeysWarning = `No public SSH keys found for ${actor}; continuing without them even if it is less secure (please consider adding an SSH key, see https://docs.github.com/en/authentication/connecting-to-github-with-ssh/adding-a-new-ssh-key-to-your-github-account)`
         else throw new Error(`No public SSH keys registered with ${actor}'s GitHub profile`)
       } else {
         const sshPath = path.join(os.homedir(), ".ssh")
         await fs.promises.mkdir(sshPath, { recursive: true })
         const authorizedKeysPath = path.join(sshPath, "authorized_keys")
-        await fs.promises.writeFile(authorizedKeysPath, keys.data.map(e => e.key).join('\n'))
+        await fs.promises.writeFile(authorizedKeysPath, keys.map(e => e.key).join('\n'))
         newSessionExtra = `-a "${authorizedKeysPath}"`
         tmateSSHDashI = "ssh -i <path-to-private-SSH-key>"
       }
