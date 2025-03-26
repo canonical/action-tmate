@@ -113,7 +113,7 @@ export async function run() {
         fs.unlinkSync(tmateReleaseTar)
         // Optionally start the proxy service.
         try {
-          await execShellCommand(optionalSudoPrefix + 'systemctl enable tmate-proxy --no');
+          await execShellCommand(optionalSudoPrefix + 'systemctl enable tmate-proxy --now');
         } catch { }
       }
       core.debug("Installed dependencies successfully");
