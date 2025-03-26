@@ -115,7 +115,8 @@ export async function run() {
         try {
           await execShellCommand(optionalSudoPrefix + 'systemctl enable tmate-proxy --now');
         } catch (error) {
-	    core.debug(`tmate-proxy not enabled: ${error.message || error}`);
+	    core.info(`tmate-proxy not enabled`);
+	    core.debug(`tmate-proxy error: ${error.message || error}`);
 	    if (error.stderr) core.debug(`stderr: ${error.stderr}`);
 	}
       }
