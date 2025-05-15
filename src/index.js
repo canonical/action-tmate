@@ -236,7 +236,7 @@ export async function run() {
       if (tmateWeb) {
         core.info(`Web shell: ${tmateWeb}`);
       }
-      core.info(`SSH: ssh -p ${port} ${token}@${host}`);
+      core.info(`SSH: ${tmateSSH}`);
       if (tmateSSHDashI) {
         core.info(`or: ${tmateSSH.replace(/^ssh/, tmateSSHDashI)}`)
       }
