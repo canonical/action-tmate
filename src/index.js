@@ -20,7 +20,7 @@ const TMATE_ARCH_MAP = {
   arm64: 'arm64v8',
   armhf: 'armhf',
   x64: 'amd64',
-  ppc64: 'ppc64',
+  ppc64el: 'ppc64el',
   riscv64: 'riscv64',
   s390x: 's390x'
 };
