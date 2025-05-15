@@ -1,25 +1,28 @@
 // @ts-check
 import * as core from "@actions/core"
 import * as github from "@actions/github"
-import * as tc from "@actions/tool-cache"
 import { Octokit } from "@octokit/rest"
 import fs from "fs"
 import os from "os"
 import path from "path"
 import process from "process"
 
-import { execShellCommand, getLinuxDistro, getValidatedEnvVars, useSudoPrefix } from "./helpers"
-
-const TMATE_LINUX_VERSION = "2.4.0"
+import { execShellCommand, getValidatedEnvVars, useSudoPrefix } from "./helpers"
 
 // Map os.arch() values to the architectures in tmate release binary filenames.
 // Possible os.arch() values documented here:
 // https://nodejs.org/api/os.html#os_os_arch
 // Available tmate binaries listed here:
-// https://github.com/tmate-io/tmate/releases/
+// https://packages.ubuntu.com/jammy/tmate
+// For different Ubuntu releases, change the release (i.e. jammy) to the
+// appropriate release.
 const TMATE_ARCH_MAP = {
   arm64: 'arm64v8',
+  armhf: 'armhf',
   x64: 'amd64',
+  ppc64: 'ppc64',
+  riscv64: 'riscv64',
+  s390x: 's390x'
 };
 
 /** @param {number} ms */
@@ -56,12 +59,11 @@ export async function run() {
           connectTimeoutSeconds = 10 * 60
         }
 
-        for (let seconds = connectTimeoutSeconds; seconds > 0; ) {
-          console.log(`${
-            await hasAnyoneConnectedYet()
+        for (let seconds = connectTimeoutSeconds; seconds > 0;) {
+          console.log(`${await hasAnyoneConnectedYet()
             ? 'Waiting for session to end'
             : `Waiting for client to connect (at most ${seconds} more second(s))`
-          }\n${message}`)
+            }\n${message}`)
 
           if (continueFileExists()) {
             core.info("Exiting debugging session because the continue file was created")
@@ -83,51 +85,31 @@ export async function run() {
     let tmateExecutable = "tmate"
     if (core.getInput("install-dependencies") !== "false") {
       core.debug("Installing dependencies")
-      if (process.platform === "darwin") {
-        await execShellCommand('brew install tmate');
-      } else if (process.platform === "win32") {
-        await execShellCommand('pacman -S --noconfirm tmate');
-      } else {
-        const optionalSudoPrefix = useSudoPrefix() ? "sudo " : "";
-        const distro = await getLinuxDistro();
-        core.debug("linux distro: [" + distro + "]");
-        if (distro === "alpine") {
-          // for set -e workaround, we need to install bash because alpine doesn't have it
-          await execShellCommand(optionalSudoPrefix + 'apk add openssh-client xz bash');
-        } else if (distro === "arch") {
-          // partial upgrades are not supported so also upgrade everything
-          await execShellCommand(optionalSudoPrefix + 'pacman -Syu --noconfirm xz openssh');
-        } else if (distro === "fedora" || distro === "centos" || distro === "rhel" || distro === "almalinux") {
-          await execShellCommand(optionalSudoPrefix + 'dnf install -y xz openssh');
-        } else {
-          await execShellCommand(optionalSudoPrefix + 'apt-get update');
-          await execShellCommand(optionalSudoPrefix + 'apt-get install -y openssh-client xz-utils');
-        }
+      const optionalSudoPrefix = useSudoPrefix() ? "sudo " : "";
+      await execShellCommand(optionalSudoPrefix + 'apt-get update');
+      await execShellCommand(optionalSudoPrefix + 'apt-get install -y openssh-client xz-utils');
+      await execShellCommand(optionalSudoPrefix + 'apt-get install -y tmate');
 
-        const tmateArch = TMATE_ARCH_MAP[os.arch()];
-        if (!tmateArch) {
-          throw new Error(`Unsupported architecture: ${os.arch()}`)
-        }
-        const tmateReleaseTar = await tc.downloadTool(`https://github.com/tmate-io/tmate/releases/download/${TMATE_LINUX_VERSION}/tmate-${TMATE_LINUX_VERSION}-static-linux-${tmateArch}.tar.xz`);
-        const tmateDir = path.join(os.tmpdir(), "tmate")
-        tmateExecutable = path.join(tmateDir, "tmate")
-
-        if (fs.existsSync(tmateExecutable))
-          fs.unlinkSync(tmateExecutable)
-        fs.mkdirSync(tmateDir, { recursive: true })
-        await execShellCommand(`tar x -C ${tmateDir} -f ${tmateReleaseTar} --strip-components=1`)
-        fs.unlinkSync(tmateReleaseTar)
-        // Optionally start the proxy service.
-        try {
-          await execShellCommand(optionalSudoPrefix + 'systemctl enable tmate-proxy --now');
-        } catch (error) {
-	    core.info(`tmate-proxy not enabled`);
-	    core.debug(`tmate-proxy error: ${error.message || error}`);
-	    if (error.stderr) core.debug(`stderr: ${error.stderr}`);
-	}
+      const tmateArch = TMATE_ARCH_MAP[os.arch()];
+      if (!tmateArch) {
+        throw new Error(`Unsupported architecture: ${os.arch()}`)
       }
-      core.debug("Installed dependencies successfully");
+      // We change from downloading tmate from source built tar from GitHub to the
+      // Ubuntu packages tmate binary. Hence we've removed support for non Ubuntu/Linux
+      // platforms/distributions.
+      // This decision is to support different architectures.
+      tmateExecutable = path.join("/usr/bin/", "tmate")
+
+      // Optionally start the proxy service.
+      try {
+        await execShellCommand(optionalSudoPrefix + 'systemctl enable tmate-proxy --now');
+      } catch (error) {
+        core.info(`tmate-proxy not enabled`);
+        core.debug(`tmate-proxy error: ${error.message || error}`);
+        if (error.stderr) core.debug(`stderr: ${error.stderr}`);
+      }
     }
+    core.debug("Installed dependencies successfully");
 
     if (process.platform === "win32") {
       tmateExecutable = 'CHERE_INVOKING=1 tmate'
@@ -147,7 +129,7 @@ export async function run() {
     if (limitAccessToActor === "true" || limitAccessToActor === "auto") {
       const { actor, apiUrl } = github.context
       const auth = core.getInput('github-token')
-      const octokit = new Octokit({ auth, baseUrl: apiUrl, request: { fetch }});
+      const octokit = new Octokit({ auth, baseUrl: apiUrl, request: { fetch } });
 
       const keys = await octokit.users.listPublicKeysForUser({
         username: actor
@@ -203,8 +185,8 @@ export async function run() {
 
     core.debug("Fetching connection strings")
     const tmateSSH = await execShellCommand(`${tmate} display -p '#{tmate_ssh}'`);
-    const [ , ,tokenHost] = tmateSSH.split(" ");
-    const [token, ] = tokenHost.split("@")
+    const [, , tokenHost] = tmateSSH.split(" ");
+    const [token,] = tokenHost.split("@")
     const tmateWeb = await execShellCommand(`${tmate} display -p '#{tmate_web}'`);
 
     /*
@@ -233,7 +215,7 @@ export async function run() {
       }
       core.saveState('message', message)
       core.saveState('tmate', tmate)
-      
+
       // Set the SSH command as an output so other jobs can use it
       core.setOutput('ssh-command', tmateSSH)
       // Extract and set the raw SSH address (without the "ssh" prefix)
@@ -241,7 +223,7 @@ export async function run() {
       if (tmateWeb) {
         core.setOutput('web-url', tmateWeb)
       }
-      
+
       console.log(message)
       return
     }
