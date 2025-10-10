@@ -86,9 +86,9 @@ export async function run() {
     if (core.getInput("install-dependencies") !== "false") {
       core.debug("Installing dependencies")
       const optionalSudoPrefix = useSudoPrefix() ? "sudo " : "";
-      await execShellCommand(optionalSudoPrefix + 'apt-get update');
-      await execShellCommand(optionalSudoPrefix + 'apt-get install -y openssh-client xz-utils');
-      await execShellCommand(optionalSudoPrefix + 'apt-get install -y tmate');
+      await execShellCommand(optionalSudoPrefix + 'DEBIAN_FRONTEND=noninteractive apt-get update');
+      await execShellCommand(optionalSudoPrefix + 'DEBIAN_FRONTEND=noninteractive apt-get install -y openssh-client xz-utils');
+      await execShellCommand(optionalSudoPrefix + 'DEBIAN_FRONTEND=noninteractive apt-get install -y tmate');
 
       const tmateArch = TMATE_ARCH_MAP[os.arch()];
       if (!tmateArch) {
