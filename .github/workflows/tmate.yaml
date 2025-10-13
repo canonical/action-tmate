@@ -5,7 +5,9 @@ on:
     
 jobs:
   build:
-    runs-on: [self-hosted, linux, X64, jammy, medium]
+    runs-on: [self-hosted, linux, X64, jammy, large]
     steps:
     - name: Setup tmate session
       uses: canonical/action-tmate@main
+      with:
+        detached: true
