@@ -1,0 +1,11 @@
+name: Canonical action-tmate test
+    
+on:
+  push:
+    
+jobs:
+  build:
+    runs-on: [self-hosted, linux, X64, jammy, medium]
+    steps:
+    - name: Setup tmate session
+      uses: canonical/action-tmate@main
