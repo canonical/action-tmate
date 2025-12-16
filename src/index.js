@@ -32,6 +32,7 @@ export async function run() {
   try {
     // Enable debug logging by default
     process.env.ACTIONS_STEP_DEBUG = "true";
+    core.info("running test/tmate-verbose")
     core.debug("Debug logging enabled by default");
 
     /*  Indicates whether the POST action is running */
