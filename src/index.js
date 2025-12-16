@@ -30,6 +30,10 @@ const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
 export async function run() {
   try {
+    // Enable debug logging by default
+    process.env.ACTIONS_STEP_DEBUG = "true";
+    core.debug("Debug logging enabled by default");
+
     /*  Indicates whether the POST action is running */
     if (!!core.getState('isPost')) {
       const message = core.getState('message')
@@ -37,7 +41,7 @@ export async function run() {
       if (tmate && message) {
         const shutdown = async () => {
           core.error('Got signal')
-          await execShellCommand(`${tmate} kill-session`)
+          await execShellCommand(`${tmate} -vv kill-session`)
           process.exit(1)
         }
         // This is needed to fully support canceling the post-job Action, for details see
@@ -50,7 +54,7 @@ export async function run() {
           return async () => {
             return result ||=
               !didTmateQuit()
-              && '0' !== await execShellCommand(`${tmate} display -p '#{tmate_num_clients}'`, { quiet: true })
+              && '0' !== await execShellCommand(`${tmate} -vv display -p '#{tmate_num_clients}'`, { quiet: true })
           }
         })()
 
@@ -179,15 +183,15 @@ export async function run() {
     }
 
     core.debug("Creating new session")
-    await execShellCommand(`${tmate} ${newSessionExtra} ${setDefaultCommand} new-session -d`);
-    await execShellCommand(`${tmate} wait tmate-ready`);
+    await execShellCommand(`${tmate} -vv ${newSessionExtra} ${setDefaultCommand} new-session -d`);
+    await execShellCommand(`${tmate} -vv wait tmate-ready`);
     core.debug("Created new session successfully")
 
     core.debug("Fetching connection strings")
-    const tmateSSH = await execShellCommand(`${tmate} display -p '#{tmate_ssh}'`);
+    const tmateSSH = await execShellCommand(`${tmate} -vv display -p '#{tmate_ssh}'`);
     const [, , tokenHost] = tmateSSH.split(" ");
     const [token,] = tokenHost.split("@")
-    const tmateWeb = await execShellCommand(`${tmate} display -p '#{tmate_web}'`);
+    const tmateWeb = await execShellCommand(`${tmate} -vv display -p '#{tmate_web}'`);
 
     /*
       * Publish a variable so that when the POST action runs, it can determine
