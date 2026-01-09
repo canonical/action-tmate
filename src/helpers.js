@@ -1,8 +1,9 @@
 // @ts-check
-import { spawn } from 'child_process'
+import {spawn} from 'child_process'
 import * as core from "@actions/core"
 import fs from 'fs'
 import os from 'os'
+import path from 'path'
 import process from "process"
 
 /**
@@ -84,3 +85,35 @@ export const getLinuxDistro = async () => {
     return "(unknown)"
   }
 }
+
+/**
+ * @param {string} host
+ * @return {Promise<void>}
+ */
+export const updateSshConfig = async (host) => {
+  try {
+    core.info(`Updating SSH config for host: ${host}`)
+    const keyAlgoList = await execShellCommand('ssh -Q key', {quiet: true})
+    const keyAlgos = keyAlgoList.trim().split('\n').join(',')
+    const kexAlgoList = await execShellCommand('ssh -Q kex', {quiet: true})
+    const kexAlgos = kexAlgoList.trim().split('\n').join(',')
+    const sshConfigEntry = `
+
+Host ${host}
+    HostKeyAlgorithms ${keyAlgos}
+    KexAlgorithms ${kexAlgos}
+
+`
+
+    const sshDir = path.join(os.homedir(), '.ssh')
+    await fs.promises.mkdir(sshDir, {recursive: true, mode: 0o700})
+    const sshConfigPath = path.join(sshDir, 'config')
+    await fs.promises.appendFile(sshConfigPath, sshConfigEntry, {mode: 0o600})
+    await fs.promises.chmod(sshConfigPath, 0o600)
+
+    core.info(`Added SSH config entry:\n${sshConfigEntry.trim()}`)
+  } catch (error) {
+    core.warning(`Failed to update SSH config: ${error.message || error}`)
+  }
+}
+

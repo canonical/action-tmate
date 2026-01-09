@@ -7,7 +7,7 @@ import os from "os"
 import path from "path"
 import process from "process"
 
-import { execShellCommand, getValidatedEnvVars, useSudoPrefix } from "./helpers"
+import { execShellCommand, getValidatedEnvVars, updateSshConfig, useSudoPrefix } from "./helpers"
 
 // Map os.arch() values to the architectures in tmate release binary filenames.
 // Possible os.arch() values documented here:
@@ -176,6 +176,12 @@ export async function run() {
           port = value;
         }
       }
+    }
+
+    if (host) {
+      await updateSshConfig(host);
+    } else {
+      await updateSshConfig("ssh.tmate.io");
     }
 
     core.debug("Creating new session")
