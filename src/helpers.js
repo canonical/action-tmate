@@ -102,7 +102,7 @@ export const updateSshConfig = async (host) => {
       "aes256-gcm@openssh.com"
     ]
     const cipherList = (await execShellCommand("ssh -Q cipher", {quiet: true})).trim().split("\n")
-    const ciphers = cipherAllowList.filter(cipherList.includes).join(",")
+    const ciphers = cipherAllowList.filter(c => cipherList.includes(c)).join(",")
     const keyAlgoAllowList = [
       "ssh-ed25519-cert-v01@openssh.com",
       "ecdsa-sha2-nistp256-cert-v01@openssh.com",
@@ -122,7 +122,7 @@ export const updateSshConfig = async (host) => {
       "rsa-sha2-256"
     ]
     const keyAlgoList = (await execShellCommand("ssh -Q key", {quiet: true})).trim().split("\n")
-    const keyAlgos = keyAlgoAllowList.filter(keyAlgoList.includes).join(",")
+    const keyAlgos = keyAlgoAllowList.filter(k => keyAlgoList.includes(k)).join(",")
     const kexAlgoAllowList = [
       "sntrup761x25519-sha512@openssh.com",
       "curve25519-sha256",
@@ -136,7 +136,7 @@ export const updateSshConfig = async (host) => {
       "diffie-hellman-group14-sha256"
     ]
     const kexAlgoList = (await execShellCommand("ssh -Q kex", {quiet: true})).trim().split("\n")
-    const kexAlgos = kexAlgoAllowList.filter(kexAlgoList.includes).join(",")
+    const kexAlgos = kexAlgoAllowList.filter(k => kexAlgoList.includes(k)).join(",")
     const sshConfigEntry = `
 
 Host ${host}
