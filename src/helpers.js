@@ -93,56 +93,13 @@ export const getLinuxDistro = async () => {
 export const updateSshConfig = async (host) => {
   try {
     core.info(`Updating SSH config for host: ${host}`)
-    const cipherAllowList = [
-      "chacha20-poly1305@openssh.com",
-      "aes128-ctr",
-      "aes192-ctr",
-      "aes256-ctr",
-      "aes128-gcm@openssh.com",
-      "aes256-gcm@openssh.com"
-    ]
-    const cipherList = (await execShellCommand("ssh -Q cipher", {quiet: true})).trim().split("\n")
-    const ciphers = cipherAllowList.filter(c => cipherList.includes(c)).join(",")
-    const keyAlgoAllowList = [
-      // "ssh-ed25519-cert-v01@openssh.com",
-      // "ecdsa-sha2-nistp256-cert-v01@openssh.com",
-      // "ecdsa-sha2-nistp384-cert-v01@openssh.com",
-      // "ecdsa-sha2-nistp521-cert-v01@openssh.com",
-      // "sk-ssh-ed25519-cert-v01@openssh.com",
-      // "sk-ecdsa-sha2-nistp256-cert-v01@openssh.com",
-      "rsa-sha2-512-cert-v01@openssh.com",
-      "rsa-sha2-256-cert-v01@openssh.com",
-      // "ssh-ed25519",
-      // "ecdsa-sha2-nistp256",
-      // "ecdsa-sha2-nistp384",
-      // "ecdsa-sha2-nistp521",
-      // "sk-ecdsa-sha2-nistp256@openssh.com",
-      // "sk-ssh-ed25519@openssh.com",
-      "rsa-sha2-512",
-      "rsa-sha2-256"
-    ]
-    const keyAlgoList = (await execShellCommand("ssh -Q key", {quiet: true})).trim().split("\n")
-    const keyAlgos = keyAlgoAllowList.filter(k => keyAlgoList.includes(k)).join(",")
-    const kexAlgoAllowList = [
-      // "sntrup761x25519-sha512@openssh.com",
-      // "curve25519-sha256",
-      // "curve25519-sha256@libssh.org",
-      "ecdh-sha2-nistp256",
-      "ecdh-sha2-nistp384",
-      "ecdh-sha2-nistp521",
-      "diffie-hellman-group-exchange-sha256",
-      "diffie-hellman-group16-sha512",
-      "diffie-hellman-group18-sha512",
-      "diffie-hellman-group14-sha256"
-    ]
-    const kexAlgoList = (await execShellCommand("ssh -Q kex", {quiet: true})).trim().split("\n")
-    const kexAlgos = kexAlgoAllowList.filter(k => kexAlgoList.includes(k)).join(",")
     const sshConfigEntry = `
 
 Host ${host}
-    HostKeyAlgorithms ${keyAlgos}
-    KexAlgorithms ${kexAlgos}
-    Ciphers ${ciphers}
+    HostKeyAlgorithms ecdsa-sha2-nistp256-cert-v01@openssh.com,ecdsa-sha2-nistp384-cert-v01@openssh.com,ecdsa-sha2-nistp521-cert-v01@openssh.com,sk-ecdsa-sha2-nistp256-cert-v01@openssh.com,rsa-sha2-512-cert-v01@openssh.com,rsa-sha2-256-cert-v01@openssh.com,ecdsa-sha2-nistp256,ecdsa-sha2-nistp384,ecdsa-sha2-nistp521,sk-ecdsa-sha2-nistp256@openssh.com,rsa-sha2- 512,rsa-sha2-256
+    KexAlgorithms ecdh-sha2-nistp256,ecdh-sha2-nistp384,ecdh-sha2-nistp521,diffie-hellman-group-exchange-sha256,diffie-hellman-group16-sha512,diffie-hellman-group18-sha512,diffie-hellman-group14-sha256,ext-info-c,kex-strict-c-v00@openssh.com
+    Ciphers aes128-ctr,aes192-ctr,aes256-ctr,aes128-cbc,3des-cbc,aes192-cbc,aes256-cbc,aes128-gcm@openssh.com,aes256-gcm@openssh.com
+    MACs hmac-sha1,hmac-sha2-256,hmac-sha2-512,hmac-sha1-etm@openssh.com,hmac-sha2-256-etm@openssh.com,hmac-sha2-512-etm@openssh.com
 `
 
     const sshDir = path.join(os.homedir(), ".ssh")
@@ -156,4 +113,3 @@ Host ${host}
     core.warning(`Failed to update SSH config: ${error.message || error}`)
   }
 }
-
