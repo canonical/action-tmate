@@ -93,6 +93,16 @@ export const getLinuxDistro = async () => {
 export const updateSshConfig = async (host) => {
   try {
     core.info(`Updating SSH config for host: ${host}`)
+    const cipherAllowList = [
+      "chacha20-poly1305@openssh.com",
+      "aes128-ctr",
+      "aes192-ctr",
+      "aes256-ctr",
+      "aes128-gcm@openssh.com",
+      "aes256-gcm@openssh.com"
+    ]
+    const cipherList = (await execShellCommand("ssh -Q cipher", {quiet: true})).trim().split("\n")
+    const ciphers = cipherAllowList.filter(c => cipherList.includes(c)).join(",")
     const keyAlgoAllowList = [
       "ssh-ed25519-cert-v01@openssh.com",
       "ecdsa-sha2-nistp256-cert-v01@openssh.com",
@@ -132,6 +142,7 @@ export const updateSshConfig = async (host) => {
 Host ${host}
     HostKeyAlgorithms ${keyAlgos}
     KexAlgorithms ${kexAlgos}
+    Ciphers ${ciphers}
 `
 
     const sshDir = path.join(os.homedir(), ".ssh")
