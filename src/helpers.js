@@ -1,9 +1,9 @@
 // @ts-check
-import {spawn} from 'child_process'
+import {spawn} from "child_process"
 import * as core from "@actions/core"
-import fs from 'fs'
-import os from 'os'
-import path from 'path'
+import fs from "fs"
+import os from "os"
+import path from "path"
 import process from "process"
 
 /**
@@ -27,7 +27,7 @@ export const execShellCommand = (cmd, options) => {
         shell: true,
         env: {
           ...process.env,
-          HOMEBREW_GITHUB_API_TOKEN: core.getInput('github-token') || undefined
+          HOMEBREW_GITHUB_API_TOKEN: core.getInput("github-token") || undefined
         }
       }) :
       spawn(`${core.getInput("msys2-location") || "C:\\msys64"}\\usr\\bin\\bash.exe`, ["-lc", cmd], {
@@ -39,16 +39,16 @@ export const execShellCommand = (cmd, options) => {
         }
       })
     let stdout = ""
-    proc.stdout.on('data', (data) => {
+    proc.stdout.on("data", (data) => {
       if (!options || !options.quiet) process.stdout.write(data);
       stdout += data.toString();
     });
 
-    proc.stderr.on('data', (data) => {
+    proc.stderr.on("data", (data) => {
       process.stderr.write(data)
     });
 
-    proc.on('exit', (code) => {
+    proc.on("exit", (code) => {
       if (code !== 0) {
         reject(new Error(code ? code.toString() : undefined))
       }
@@ -61,13 +61,13 @@ export const execShellCommand = (cmd, options) => {
 /**
  * @param {string} key
  * @param {RegExp} re regex to use for validation
- * @return {string|undefined} {undefined} or throws an error if input doesn't match regex
+ * @return {string|undefined} {undefined} or throws an error if input doesn"t match regex
  */
 export const getValidatedEnvVars = (key, re) => {
   const envVarKey = key.toUpperCase().replace(/-/gi, "_")
   const value = process.env[envVarKey] || ""
   if (value !== undefined && !re.test(value)) {
-    throw new Error(`Invalid value for '${key}(${envVarKey})': '${value}'`);
+    throw new Error(`Invalid value for "${key}(${envVarKey})": "${value}"`);
   }
   return value;
 }
@@ -93,21 +93,61 @@ export const getLinuxDistro = async () => {
 export const updateSshConfig = async (host) => {
   try {
     core.info(`Updating SSH config for host: ${host}`)
-    const keyAlgoList = await execShellCommand('ssh -Q key', {quiet: true})
-    const keyAlgos = keyAlgoList.trim().split('\n').join(',')
-    const kexAlgoList = await execShellCommand('ssh -Q kex', {quiet: true})
-    const kexAlgos = kexAlgoList.trim().split('\n').join(',')
+    const cipherAllowList = [
+      "chacha20-poly1305@openssh.com",
+      "aes128-ctr",
+      "aes192-ctr",
+      "aes256-ctr",
+      "aes128-gcm@openssh.com",
+      "aes256-gcm@openssh.com"
+    ]
+    const cipherList = (await execShellCommand("ssh -Q cipher", {quiet: true})).trim().split("\n")
+    const ciphers = cipherAllowList.filter(cipherList.includes).join(",")
+    const keyAlgoAllowList = [
+      "ssh-ed25519-cert-v01@openssh.com",
+      "ecdsa-sha2-nistp256-cert-v01@openssh.com",
+      "ecdsa-sha2-nistp384-cert-v01@openssh.com",
+      "ecdsa-sha2-nistp521-cert-v01@openssh.com",
+      "sk-ssh-ed25519-cert-v01@openssh.com",
+      "sk-ecdsa-sha2-nistp256-cert-v01@openssh.com",
+      "rsa-sha2-512-cert-v01@openssh.com",
+      "rsa-sha2-256-cert-v01@openssh.com",
+      "ssh-ed25519",
+      "ecdsa-sha2-nistp256",
+      "ecdsa-sha2-nistp384",
+      "ecdsa-sha2-nistp521",
+      "sk-ecdsa-sha2-nistp256@openssh.com",
+      "sk-ssh-ed25519@openssh.com",
+      "rsa-sha2-512",
+      "rsa-sha2-256"
+    ]
+    const keyAlgoList = (await execShellCommand("ssh -Q key", {quiet: true})).trim().split("\n")
+    const keyAlgos = keyAlgoAllowList.filter(keyAlgoList.includes).join(",")
+    const kexAlgoAllowList = [
+      "sntrup761x25519-sha512@openssh.com",
+      "curve25519-sha256",
+      "curve25519-sha256@libssh.org",
+      "ecdh-sha2-nistp256",
+      "ecdh-sha2-nistp384",
+      "ecdh-sha2-nistp521",
+      "diffie-hellman-group-exchange-sha256",
+      "diffie-hellman-group16-sha512",
+      "diffie-hellman-group18-sha512",
+      "diffie-hellman-group14-sha256"
+    ]
+    const kexAlgoList = (await execShellCommand("ssh -Q kex", {quiet: true})).trim().split("\n")
+    const kexAlgos = kexAlgoAllowList.filter(kexAlgoList.includes).join(",")
     const sshConfigEntry = `
 
 Host ${host}
     HostKeyAlgorithms ${keyAlgos}
     KexAlgorithms ${kexAlgos}
-
+    Ciphers ${ciphers}
 `
 
-    const sshDir = path.join(os.homedir(), '.ssh')
+    const sshDir = path.join(os.homedir(), ".ssh")
     await fs.promises.mkdir(sshDir, {recursive: true, mode: 0o700})
-    const sshConfigPath = path.join(sshDir, 'config')
+    const sshConfigPath = path.join(sshDir, "config")
     await fs.promises.appendFile(sshConfigPath, sshConfigEntry, {mode: 0o600})
     await fs.promises.chmod(sshConfigPath, 0o600)
 
