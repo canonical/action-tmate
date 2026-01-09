@@ -105,7 +105,7 @@ Host ${host}
     const sshDir = path.join(os.homedir(), ".ssh")
     await fs.promises.mkdir(sshDir, {recursive: true, mode: 0o700})
     const sshConfigPath = path.join(sshDir, "config")
-    await fs.promises.appendFile(sshConfigPath, sshConfigEntry, {mode: 0o600})
+    await fs.promises.appendFile(sshConfigPath, sshConfigEntry)
     await fs.promises.chmod(sshConfigPath, 0o600)
 
     core.info(`Added SSH config entry:\n${sshConfigEntry.trim()}`)
