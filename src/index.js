@@ -178,11 +178,7 @@ export async function run() {
       }
     }
 
-    if (host) {
-      await updateSshConfig(host);
-    } else {
-      await updateSshConfig("ssh.tmate.io");
-    }
+    await updateSshConfig(host || "ssh.tmate.io");
 
     core.debug("Creating new session")
     await execShellCommand(`${tmate} ${newSessionExtra} ${setDefaultCommand} new-session -d`);
