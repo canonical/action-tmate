@@ -1,8 +1,9 @@
 // @ts-check
-import { spawn } from 'child_process'
+import {spawn} from "child_process"
 import * as core from "@actions/core"
-import fs from 'fs'
-import os from 'os'
+import fs from "fs"
+import os from "os"
+import path from "path"
 import process from "process"
 
 /**
@@ -26,7 +27,7 @@ export const execShellCommand = (cmd, options) => {
         shell: true,
         env: {
           ...process.env,
-          HOMEBREW_GITHUB_API_TOKEN: core.getInput('github-token') || undefined
+          HOMEBREW_GITHUB_API_TOKEN: core.getInput("github-token") || undefined
         }
       }) :
       spawn(`${core.getInput("msys2-location") || "C:\\msys64"}\\usr\\bin\\bash.exe`, ["-lc", cmd], {
@@ -38,16 +39,16 @@ export const execShellCommand = (cmd, options) => {
         }
       })
     let stdout = ""
-    proc.stdout.on('data', (data) => {
+    proc.stdout.on("data", (data) => {
       if (!options || !options.quiet) process.stdout.write(data);
       stdout += data.toString();
     });
 
-    proc.stderr.on('data', (data) => {
+    proc.stderr.on("data", (data) => {
       process.stderr.write(data)
     });
 
-    proc.on('exit', (code) => {
+    proc.on("exit", (code) => {
       if (code !== 0) {
         reject(new Error(code ? code.toString() : undefined))
       }
@@ -60,13 +61,13 @@ export const execShellCommand = (cmd, options) => {
 /**
  * @param {string} key
  * @param {RegExp} re regex to use for validation
- * @return {string|undefined} {undefined} or throws an error if input doesn't match regex
+ * @return {string|undefined} {undefined} or throws an error if input doesn"t match regex
  */
 export const getValidatedEnvVars = (key, re) => {
   const envVarKey = key.toUpperCase().replace(/-/gi, "_")
   const value = process.env[envVarKey] || ""
   if (value !== undefined && !re.test(value)) {
-    throw new Error(`Invalid value for '${key}(${envVarKey})': '${value}'`);
+    throw new Error(`Invalid value for "${key}(${envVarKey})": "${value}"`);
   }
   return value;
 }
@@ -82,5 +83,33 @@ export const getLinuxDistro = async () => {
     return match ? match[1] : "(unknown)"
   } catch (e) {
     return "(unknown)"
+  }
+}
+
+/**
+ * @param {string} host
+ * @return {Promise<void>}
+ */
+export const updateSshConfig = async (host) => {
+  try {
+    core.info(`Updating SSH config for host: ${host}`)
+    const sshConfigEntry = `
+
+Host ${host}
+    HostKeyAlgorithms ecdsa-sha2-nistp256-cert-v01@openssh.com,ecdsa-sha2-nistp384-cert-v01@openssh.com,ecdsa-sha2-nistp521-cert-v01@openssh.com,sk-ecdsa-sha2-nistp256-cert-v01@openssh.com,rsa-sha2-512-cert-v01@openssh.com,rsa-sha2-256-cert-v01@openssh.com,ecdsa-sha2-nistp256,ecdsa-sha2-nistp384,ecdsa-sha2-nistp521,sk-ecdsa-sha2-nistp256@openssh.com,rsa-sha2-512,rsa-sha2-256
+    KexAlgorithms ecdh-sha2-nistp256,ecdh-sha2-nistp384,ecdh-sha2-nistp521,diffie-hellman-group-exchange-sha256,diffie-hellman-group16-sha512,diffie-hellman-group18-sha512,diffie-hellman-group14-sha256,ext-info-c,kex-strict-c-v00@openssh.com
+    Ciphers aes128-ctr,aes192-ctr,aes256-ctr,aes128-cbc,3des-cbc,aes192-cbc,aes256-cbc,aes128-gcm@openssh.com,aes256-gcm@openssh.com
+    MACs hmac-sha1,hmac-sha2-256,hmac-sha2-512,hmac-sha1-etm@openssh.com,hmac-sha2-256-etm@openssh.com,hmac-sha2-512-etm@openssh.com
+`
+
+    const sshDir = path.join(os.homedir(), ".ssh")
+    await fs.promises.mkdir(sshDir, {recursive: true, mode: 0o700})
+    const sshConfigPath = path.join(sshDir, "config")
+    await fs.promises.appendFile(sshConfigPath, sshConfigEntry)
+    await fs.promises.chmod(sshConfigPath, 0o600)
+
+    core.info(`Added SSH config entry:\n${sshConfigEntry.trim()}`)
+  } catch (error) {
+    core.warning(`Failed to update SSH config: ${error.message || error}`)
   }
 }
