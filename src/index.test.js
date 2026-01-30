@@ -22,9 +22,11 @@ jest.mock('./helpers', () => {
     __esModule: true,
     ...originalModule,
     execShellCommand: jest.fn(() => 'mocked execShellCommand'),
+    getValidatedEnvVars: jest.fn(originalModule.getValidatedEnvVars),
+    updateSshConfig: jest.fn(originalModule.updateSshConfig),
   };
 });
-import { execShellCommand } from "./helpers"
+import { execShellCommand, getValidatedEnvVars, updateSshConfig } from "./helpers"
 import { run } from "."
 
 describe('Tmate GitHub integration', () => {
@@ -117,6 +119,37 @@ describe('Tmate GitHub integration', () => {
     core.getInput.mockReturnValueOnce("false")
     await run()
     expect(execShellCommand).not.toHaveBeenNthCalledWith(1, "brew install tmate")
+  });
+  it('should create session and exit immediately in smoke-test mode', async () => {
+    Object.defineProperty(process, "platform", {
+      value: "linux"
+    })
+    const customConnectionString = "ssh -p2222 foobar@test.example.com"
+    const webUrl = "https://test.example.com"
+    execShellCommand.mockImplementation((cmd) => {
+      if (cmd.includes("tmate_web")) return Promise.resolve(webUrl)
+      if (cmd.includes("tmate_ssh")) return Promise.resolve(customConnectionString)
+      return Promise.resolve("")
+    })
+    core.getInput.mockImplementation((name) => {
+      if (name === "install-dependencies") return "false"
+      if (name === "limit-access-to-actor") return "false"
+      if (name === "smoke-test") return "true"
+      return ""
+    })
+    getValidatedEnvVars.mockReturnValue(undefined)
+    updateSshConfig.mockResolvedValue(undefined)
+
+    await run()
+
+    expect(core.info).toHaveBeenCalledWith("Smoke test: tmate session created successfully")
+    expect(core.info).toHaveBeenCalledWith(`SSH: ${customConnectionString}`)
+    expect(core.info).toHaveBeenCalledWith(`Web shell: ${webUrl}`)
+    expect(execShellCommand).toHaveBeenCalledWith(
+      expect.stringContaining("kill-session")
+    )
+    expect(core.info).toHaveBeenCalledWith("Smoke test: session terminated, connectivity verified")
+    expect(core.saveState).not.toHaveBeenCalledWith('isPost', 'true')
   });
   it('should work without any options', async () => {
     core.getInput.mockReturnValue("");
