@@ -49,7 +49,7 @@ inputs:
     description: 'The root of the MSYS2 installation (on Windows runners)'
     required: false
     default: 'C:\msys64'
-  smoke-test:
+  connectivity-check:
     description: 'If true, connect to the tmate server and exit immediately (connectivity test)'
     required: false
     default: 'false'

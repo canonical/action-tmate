@@ -120,7 +120,7 @@ describe('Tmate GitHub integration', () => {
     await run()
     expect(execShellCommand).not.toHaveBeenNthCalledWith(1, "brew install tmate")
   });
-  it('should create session and exit immediately in smoke-test mode', async () => {
+  it('should create session and exit immediately in connectivity-check mode', async () => {
     Object.defineProperty(process, "platform", {
       value: "linux"
     })
@@ -134,7 +134,7 @@ describe('Tmate GitHub integration', () => {
     core.getInput.mockImplementation((name) => {
       if (name === "install-dependencies") return "false"
       if (name === "limit-access-to-actor") return "false"
-      if (name === "smoke-test") return "true"
+      if (name === "connectivity-check") return "true"
       return ""
     })
     getValidatedEnvVars.mockReturnValue(undefined)
@@ -142,13 +142,13 @@ describe('Tmate GitHub integration', () => {
 
     await run()
 
-    expect(core.info).toHaveBeenCalledWith("Smoke test: tmate session created successfully")
+    expect(core.info).toHaveBeenCalledWith("Connectivity check: tmate session created successfully")
     expect(core.info).toHaveBeenCalledWith(`SSH: ${customConnectionString}`)
     expect(core.info).toHaveBeenCalledWith(`Web shell: ${webUrl}`)
     expect(execShellCommand).toHaveBeenCalledWith(
       expect.stringContaining("kill-session")
     )
-    expect(core.info).toHaveBeenCalledWith("Smoke test: session terminated, connectivity verified")
+    expect(core.info).toHaveBeenCalledWith("Connectivity check: session terminated, connectivity verified")
     expect(core.saveState).not.toHaveBeenCalledWith('isPost', 'true')
   });
   it('should work without any options', async () => {

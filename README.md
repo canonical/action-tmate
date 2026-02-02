@@ -138,6 +138,24 @@ jobs:
         # Send a Slack message to someone telling them they can ssh to ${{ needs.setup-tmate.outputs.ssh-address }}
 ```
 
+## Connectivity check
+
+You can verify that the runner can reach the tmate server without starting an interactive session. When `connectivity-check` is set to `true`, the action creates a tmate session, logs the connection details, and immediately terminates.
+
+```yaml
+name: CI
+on: [push]
+jobs:
+  build:
+    runs-on: self-hosted
+    steps:
+    - uses: actions/checkout@v4
+    - name: Verify tmate connectivity
+      uses: canonical/action-tmate@main
+      with:
+        connectivity-check: true
+```
+
 ## Without sudo
 
 By default we run installation commands using sudo on Linux. If you get `sudo: not found` you can use the parameter below to execute the commands directly.
