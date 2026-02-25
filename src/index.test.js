@@ -149,7 +149,7 @@ describe('Tmate GitHub integration', () => {
       expect.stringContaining("kill-session")
     )
     expect(core.info).toHaveBeenCalledWith("Connectivity check: session terminated, connectivity verified")
-    expect(core.saveState).not.toHaveBeenCalledWith('isPost', 'true')
+    expect(core.saveState).toHaveBeenCalledWith('isPost', 'true')
   });
   it('should work without any options', async () => {
     core.getInput.mockReturnValue("");
