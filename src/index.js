@@ -31,7 +31,15 @@ const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 export async function run() {
   try {
     /*  Indicates whether the POST action is running */
-    if (!!core.getState('isPost')) {
+    const isPost = !!core.getState('isPost')
+    // Since main and post share the same entry point (lib/index.js), we use
+    // saveState/getState to distinguish them. This call has no effect on the
+    // current run — it tells the GitHub Actions runner to pass 'isPost' to
+    // the post step so it can detect itself. Must happen before any early
+    // return (e.g. connectivity-check).
+    core.saveState('isPost', 'true')
+
+    if (isPost) {
       const message = core.getState('message')
       const tmate = core.getState('tmate')
       if (tmate && message) {
@@ -201,15 +209,6 @@ export async function run() {
       core.info("Connectivity check: session terminated, connectivity verified")
       return
     }
-
-    /*
-      * Publish a variable so that when the POST action runs, it can determine
-      * it should run the appropriate logic. This is necessary since we don't
-      * have a separate entry point.
-      *
-      * Inspired by https://github.com/actions/checkout/blob/v3.1.0/src/state-helper.ts#L56-L60
-      */
-    core.saveState('isPost', 'true')
 
     const detached = core.getInput("detached")
     if (detached === "true") {
