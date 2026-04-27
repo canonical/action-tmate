@@ -1,5 +1,5 @@
 // @ts-check
-import {spawn} from "child_process"
+import { spawn } from "child_process"
 import * as core from "@actions/core"
 import fs from "fs"
 import os from "os"
@@ -97,13 +97,13 @@ export const updateSshConfig = async (host) => {
 
 Host ${host}
     HostKeyAlgorithms ecdsa-sha2-nistp256-cert-v01@openssh.com,ecdsa-sha2-nistp384-cert-v01@openssh.com,ecdsa-sha2-nistp521-cert-v01@openssh.com,sk-ecdsa-sha2-nistp256-cert-v01@openssh.com,rsa-sha2-512-cert-v01@openssh.com,rsa-sha2-256-cert-v01@openssh.com,ecdsa-sha2-nistp256,ecdsa-sha2-nistp384,ecdsa-sha2-nistp521,sk-ecdsa-sha2-nistp256@openssh.com,rsa-sha2-512,rsa-sha2-256
-    KexAlgorithms ecdh-sha2-nistp256,ecdh-sha2-nistp384,ecdh-sha2-nistp521,diffie-hellman-group-exchange-sha256,diffie-hellman-group16-sha512,diffie-hellman-group18-sha512,diffie-hellman-group14-sha256,kex-strict-c-v00@openssh.com
+    KexAlgorithms ecdh-sha2-nistp256,ecdh-sha2-nistp384,ecdh-sha2-nistp521,diffie-hellman-group-exchange-sha256,diffie-hellman-group16-sha512,diffie-hellman-group18-sha512,diffie-hellman-group14-sha256
     Ciphers aes128-ctr,aes192-ctr,aes256-ctr,aes128-cbc,3des-cbc,aes192-cbc,aes256-cbc,aes128-gcm@openssh.com,aes256-gcm@openssh.com
     MACs hmac-sha1,hmac-sha2-256,hmac-sha2-512,hmac-sha1-etm@openssh.com,hmac-sha2-256-etm@openssh.com,hmac-sha2-512-etm@openssh.com
 `
 
     const sshDir = path.join(os.homedir(), ".ssh")
-    await fs.promises.mkdir(sshDir, {recursive: true, mode: 0o700})
+    await fs.promises.mkdir(sshDir, { recursive: true, mode: 0o700 })
     const sshConfigPath = path.join(sshDir, "config")
     await fs.promises.appendFile(sshConfigPath, sshConfigEntry)
     await fs.promises.chmod(sshConfigPath, 0o600)
