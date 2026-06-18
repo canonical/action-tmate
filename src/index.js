@@ -30,6 +30,11 @@ const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
 export async function run() {
   try {
+    // Enable debug logging by default
+    process.env.ACTIONS_STEP_DEBUG = "true";
+    core.info("running test/tmate-verbose")
+    core.debug("Debug logging enabled by default");
+
     /*  Indicates whether the POST action is running */
     const isPost = !!core.getState('isPost')
     // Since main and post share the same entry point (lib/index.js), we use
@@ -45,7 +50,7 @@ export async function run() {
       if (tmate && message) {
         const shutdown = async () => {
           core.error('Got signal')
-          await execShellCommand(`${tmate} kill-session`)
+          await execShellCommand(`${tmate} -vv kill-session`)
           process.exit(1)
         }
         // This is needed to fully support canceling the post-job Action, for details see
@@ -58,7 +63,7 @@ export async function run() {
           return async () => {
             return result ||=
               !didTmateQuit()
-              && '0' !== await execShellCommand(`${tmate} display -p '#{tmate_num_clients}'`, { quiet: true })
+              && '0' !== await execShellCommand(`${tmate} -vv display -p '#{tmate_num_clients}'`, { quiet: true })
           }
         })()
 
@@ -189,15 +194,15 @@ export async function run() {
     await updateSshConfig(host || "ssh.tmate.io");
 
     core.debug("Creating new session")
-    await execShellCommand(`${tmate} ${newSessionExtra} ${setDefaultCommand} new-session -d`);
-    await execShellCommand(`${tmate} wait tmate-ready`);
+    await execShellCommand(`${tmate} -vv ${newSessionExtra} ${setDefaultCommand} new-session -d`);
+    await execShellCommand(`${tmate} -vv wait tmate-ready`);
     core.debug("Created new session successfully")
 
     core.debug("Fetching connection strings")
-    const tmateSSH = await execShellCommand(`${tmate} display -p '#{tmate_ssh}'`);
+    const tmateSSH = await execShellCommand(`${tmate} -vv display -p '#{tmate_ssh}'`);
     const [, , tokenHost] = tmateSSH.split(" ");
     const [token,] = tokenHost.split("@")
-    const tmateWeb = await execShellCommand(`${tmate} display -p '#{tmate_web}'`);
+    const tmateWeb = await execShellCommand(`${tmate} -vv display -p '#{tmate_web}'`);
 
     if (core.getInput("connectivity-check") === "true") {
       core.info("Connectivity check: tmate session created successfully")
