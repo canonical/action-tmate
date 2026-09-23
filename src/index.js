@@ -195,8 +195,6 @@ export async function run() {
 
     core.debug("Fetching connection strings")
     const tmateSSH = await execShellCommand(`${tmate} display -p '#{tmate_ssh}'`);
-    const [, , tokenHost] = tmateSSH.split(" ");
-    const [token,] = tokenHost.split("@")
     const tmateWeb = await execShellCommand(`${tmate} display -p '#{tmate_web}'`);
 
     if (core.getInput("connectivity-check") === "true") {
