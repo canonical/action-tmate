@@ -2,15 +2,15 @@
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": ["config:recommended"],
   "schedule": ["* * * * 0,6"],
+  "osvVulnerabilityAlerts": true,
   "vulnerabilityAlerts": {
     "enabled": true
   },
   "packageRules": [
     {
-      "description": "Dependency updates change the bundled lib/, which must be rebuilt with `npm run build` before merging",
+      "description": "Routine npm updates arrive with upstream syncs; only vulnerability fixes are raised here, and they need `npm run build` committed before merging",
       "matchManagers": ["npm"],
-      "matchUpdateTypes": ["minor", "patch"],
-      "groupName": "npm non-major dependencies"
+      "enabled": false
     }
   ]
 }
