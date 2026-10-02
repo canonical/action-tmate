@@ -28,7 +28,10 @@ The `Secscan` workflow scans the shipped action (`action.yml`, `lib/`, `detached
 npm manifests) with Canonical's secscan service (Trivy) on every push to `main`, weekly,
 and on demand. It fails when it finds a CVE that is not excluded.
 
-When it fails, maintainers download the `secscan-report-*` artifact and either fix the
+When it fails, maintainers download the `secscan-report-*` artifact. It contains
+`<artifact>.txt` (the scan verdict and the CVE IDs secscan reported, which is
+authoritative) and `<artifact>.report.html` (Trivy's detailed report, which may not list
+every CVE secscan reports for archive scans). Maintainers look up each CVE ID and either fix the
 dependency or open a draft [GitHub security advisory](../../security/advisories/new)
 recording the CVE, its severity and the remediation plan. A CVE accepted as a false
 positive or acceptable risk is added to `.github/secscan-exclusions/<artifact>.txt` with a

@@ -64,7 +64,7 @@ jobs:
             case "$1" in
               0) echo "No CVEs found." ;;
               101) echo "::error::Excluded CVEs are no longer reported; remove them from .github/secscan-exclusions/." ;;
-              1[0-9][0-9]) echo "::error::CVEs found; download the secscan report artifact and triage per SECURITY.md." ;;
+              1[0-9][0-9]) echo "::error::CVEs found; the secscan-report artifact's $ARTIFACT.txt lists them; triage per SECURITY.md." ;;
               *) echo "::error::secscan-client failed (exit $1); re-run the job." ;;
             esac
             return "$1"
@@ -84,7 +84,9 @@ jobs:
             "${exclusions[@]}" \
             --wait-and-print "$TARGET" | tee "reports/$ARTIFACT.txt"
           rc=${PIPESTATUS[0]}
-          secscan-client --batch report --token "$SECSCAN_DIR/$ARTIFACT.token" > "reports/$ARTIFACT.native.txt" 2>&1
+          if (( rc == 0 || rc >= 100 )); then
+            secscan-client --batch report --token "$SECSCAN_DIR/$ARTIFACT.token" > "reports/$ARTIFACT.report.html" 2> "reports/$ARTIFACT.report.err" || true
+          fi
           set -e
           classify "$rc"
       - name: Upload report
