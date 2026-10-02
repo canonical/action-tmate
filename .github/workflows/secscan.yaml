@@ -12,6 +12,11 @@ on:
     paths:
       - .github/workflows/secscan.yaml
       - .github/secscan-exclusions/**
+      - action.yml
+      - lib/**
+      - detached/**
+      - package.json
+      - package-lock.json
 
 permissions: {}
 
