@@ -6,6 +6,9 @@ on:
       - 'docs/security/sigma/**'
       - '.github/workflows/sigma_lint.yml'
 
+permissions:
+  contents: read
+
 jobs:
   sigma-lint:
     name: Sigma rules validation

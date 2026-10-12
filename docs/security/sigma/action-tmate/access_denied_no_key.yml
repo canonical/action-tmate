@@ -12,6 +12,7 @@ detection:
   selection:
     owasp_event.appid: 'canonical.action-tmate'
     owasp_event.event|startswith: 'authz_fail'
+    owasp_event.event|contains: 'no_registered_key'
     owasp_event.level: 'CRITICAL'
   condition: selection
 falsepositives:
