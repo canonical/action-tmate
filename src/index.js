@@ -8,6 +8,7 @@ import path from "path"
 import process from "process"
 
 import { execShellCommand, getValidatedEnvVars, updateSshConfig, useSudoPrefix } from "./helpers"
+import * as securityLog from "./securityLog"
 
 // Map os.arch() values to the architectures in tmate release binary filenames.
 // Possible os.arch() values documented here:
@@ -45,6 +46,9 @@ export async function run() {
       if (tmate && message) {
         const shutdown = async () => {
           core.error('Got signal')
+          securityLog.sysShutdown(github.context.actor || "unknown", {
+            description: "tmate debug session terminated by a cancellation signal",
+          })
           await execShellCommand(`${tmate} kill-session`)
           process.exit(1)
         }
@@ -86,6 +90,9 @@ export async function run() {
           await sleep(5000)
           if (!await hasAnyoneConnectedYet()) seconds -= 5
         }
+        securityLog.sysShutdown(github.context.actor || "unknown", {
+          description: "tmate debug session closed (detached mode)",
+        })
       }
       return
     }
@@ -144,7 +151,12 @@ export async function run() {
       })
       if (keys.data.length === 0) {
         if (limitAccessToActor === "auto") publicSSHKeysWarning = `No public SSH keys found for ${actor}; continuing without them even if it is less secure (please consider adding an SSH key, see https://docs.github.com/en/authentication/connecting-to-github-with-ssh/adding-a-new-ssh-key-to-your-github-account)`
-        else throw new Error(`No public SSH keys registered with ${actor}'s GitHub profile`)
+        else {
+          securityLog.authzFail(actor || "unknown", "no_registered_key", {
+            description: "Debug session access denied: triggering actor has no registered SSH key",
+          })
+          throw new Error(`No public SSH keys registered with ${actor}'s GitHub profile`)
+        }
       } else {
         const sshPath = path.join(os.homedir(), ".ssh")
         await fs.promises.mkdir(sshPath, { recursive: true })
@@ -208,6 +220,10 @@ export async function run() {
       return
     }
 
+    securityLog.sysStartup(github.context.actor || "unknown", {
+      description: "tmate debug session opened; a remote-access surface is now live on the runner",
+    })
+
     const detached = core.getInput("detached")
     if (detached === "true") {
       core.debug("Entering detached mode")
@@ -263,6 +279,10 @@ export async function run() {
 
       await sleep(5000)
     }
+
+    securityLog.sysShutdown(github.context.actor || "unknown", {
+      description: "tmate debug session closed",
+    })
 
   } catch (error) {
     core.setFailed(error);

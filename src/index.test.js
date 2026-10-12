@@ -105,9 +105,58 @@ describe('Tmate GitHub integration', () => {
     mockInputs({ "install-dependencies": "false" })
     await run()
     expect(execShellCommand).not.toHaveBeenCalledWith(expect.stringContaining("apt-get"))
-    expect(core.info).toHaveBeenNthCalledWith(1, `Web shell: ${customConnectionString}`);
-    expect(core.info).toHaveBeenNthCalledWith(2, `SSH: ${customConnectionString}`);
-    expect(core.info).toHaveBeenNthCalledWith(3, "Exiting debugging session because the continue file was created");
+    expect(core.info).toHaveBeenCalledWith(`Web shell: ${customConnectionString}`);
+    expect(core.info).toHaveBeenCalledWith(`SSH: ${customConnectionString}`);
+    expect(core.info).toHaveBeenCalledWith("Exiting debugging session because the continue file was created");
+  });
+  // Parse every OWASP security envelope emitted to the Actions run log.
+  const owaspEvents = () => core.info.mock.calls
+    .map(([line]) => line)
+    .filter((line) => typeof line === "string" && line.includes("owasp_event"))
+    .map((line) => JSON.parse(line).owasp_event)
+  it('should log sys_startup and sys_shutdown around an interactive session', async () => {
+    /**
+     * arrange: An interactive (non-detached) session for the mocked actor.
+     * act: Run the action through the main loop until the continue file appears.
+     * assert: Exactly one sys_startup and one sys_shutdown are emitted for the
+     *   actor, bracketing the live remote-access window for the audit trail.
+     */
+    mockInputs({ "install-dependencies": "false" })
+
+    await run()
+
+    const events = owaspEvents().map((e) => e.event)
+    expect(events).toEqual(["sys_startup:test-user", "sys_shutdown:test-user"])
+  });
+  it('should log authz_fail when a strict actor has no registered SSH key', async () => {
+    /**
+     * arrange: limit-access-to-actor=true, and the mocked GitHub API returns no
+     *   public keys for the actor.
+     * act: Run the action.
+     * assert: A CRITICAL authz_fail is emitted and the run fails, so a denied
+     *   access attempt is both recorded and enforced.
+     */
+    mockInputs({ "install-dependencies": "false", "limit-access-to-actor": "true" })
+
+    await run()
+
+    const event = owaspEvents().find((e) => e.event.startsWith("authz_fail"))
+    expect(event).toMatchObject({ event: "authz_fail:test-user,no_registered_key", level: "CRITICAL" })
+    expect(core.setFailed).toHaveBeenCalled()
+  });
+  it('should not log session events in connectivity-check mode', async () => {
+    /**
+     * arrange: connectivity-check mode, which creates and immediately kills a
+     *   session (used by liveness probes).
+     * act: Run the action.
+     * assert: No sys_startup/sys_shutdown are emitted, so probe sessions do not
+     *   pollute the security audit trail.
+     */
+    mockInputs({ "install-dependencies": "false", "limit-access-to-actor": "false", "connectivity-check": "true" })
+
+    await run()
+
+    expect(owaspEvents()).toEqual([])
   });
   it('should create session and exit immediately in connectivity-check mode', async () => {
     const customConnectionString = "ssh -p2222 foobar@test.example.com"
