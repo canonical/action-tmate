@@ -286,8 +286,7 @@ The connection string will be written in the logs every 5 seconds. For more info
 This action emits [OWASP](https://owasp.org/)-structured security events to the
 GitHub Actions run log so that opening a debug session (a remote-access surface)
 leaves an audit trail. Each event is a single JSON line nested under an
-`owasp_event` key, sharing the schema used by Canonical's `owasp-logger` (as in
-the `garm` and `tmate-ssh-server` charms): a UTC (RFC3339 `Z`) `datetime`,
+`owasp_event` key, with the following schema: a UTC (RFC3339 `Z`) `datetime`,
 `type: "security"`, `appid: "canonical.action-tmate"`, an OWASP `event`
 identifier, and a `level`.
 
