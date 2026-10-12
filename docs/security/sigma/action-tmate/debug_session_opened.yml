@@ -1,0 +1,18 @@
+title: Tmate Debug Session Opened on CI Runner
+id: 5d4e3f21-1b0a-49c8-a07f-6e5d4c3b2a1f
+status: experimental
+description: >-
+  Detects the action-tmate Action opening an interactive tmate debug session,
+  which exposes a live remote-access (SSH) surface on a CI runner.
+author: Canonical
+logsource:
+  category: application
+  product: canonical.action-tmate
+detection:
+  selection:
+    owasp_event.appid: 'canonical.action-tmate'
+    owasp_event.event|startswith: 'sys_startup'
+  condition: selection
+falsepositives:
+  - Authorized developer intentionally starting a debug session
+level: medium

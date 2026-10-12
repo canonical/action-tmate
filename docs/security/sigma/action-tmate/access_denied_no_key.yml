@@ -1,0 +1,19 @@
+title: Tmate Debug Session Access Denied (No Registered Key)
+id: 7f6a5b43-3d2c-4bea-c291-806f7e5d4c3b
+status: experimental
+description: >-
+  Detects action-tmate denying a debug session because limit-access-to-actor is
+  strict and the triggering actor has no registered SSH key.
+author: Canonical
+logsource:
+  category: application
+  product: canonical.action-tmate
+detection:
+  selection:
+    owasp_event.appid: 'canonical.action-tmate'
+    owasp_event.event|startswith: 'authz_fail'
+    owasp_event.level: 'CRITICAL'
+  condition: selection
+falsepositives:
+  - Actor legitimately lacking an SSH key while strict access is enforced
+level: high

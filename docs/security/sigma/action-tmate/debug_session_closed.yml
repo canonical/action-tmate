@@ -1,0 +1,19 @@
+title: Tmate Debug Session Closed on CI Runner
+id: 6e5f4a32-2c1b-4ad9-b180-7f6e5d4c3b2a
+status: experimental
+description: >-
+  Audit record of an action-tmate debug session closing (normally, in detached
+  mode, or via a cancellation signal). It brackets the remote-access window
+  opened by the corresponding sys_startup event.
+author: Canonical
+logsource:
+  category: application
+  product: canonical.action-tmate
+detection:
+  selection:
+    owasp_event.appid: 'canonical.action-tmate'
+    owasp_event.event|startswith: 'sys_shutdown'
+  condition: selection
+falsepositives:
+  - None; sys_shutdown brackets a deliberately opened debug session
+level: informational
