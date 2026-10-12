@@ -42,4 +42,15 @@ describe('securityLog OWASP envelope', () => {
     expect("description" in event).toBe(false)
     expect("note" in event).toBe(false)
   });
+  it('does not let metadata rewrite the reserved OWASP fields', () => {
+    sysStartup("carol", { event: "authn_login:attacker", level: "INFO", type: "app", appid: "spoofed" })
+
+    const event = emittedEvent()
+    expect(event).toMatchObject({
+      event: "sys_startup:carol",
+      level: "WARN",
+      type: "security",
+      appid: APPID,
+    })
+  });
 })

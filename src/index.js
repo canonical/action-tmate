@@ -90,6 +90,13 @@ export async function run() {
           await sleep(5000)
           if (!await hasAnyoneConnectedYet()) seconds -= 5
         }
+        // The wait loop can exit on the connect-timeout or the continue file
+        // while the detached tmate server is still reachable. Tear it down
+        // before auditing it closed, so sys_shutdown cannot claim the
+        // remote-access surface is gone while it is still live.
+        if (!didTmateQuit()) {
+          await execShellCommand(`${tmate} kill-session`)
+        }
         securityLog.sysShutdown(github.context.actor || "unknown", {
           description: "tmate debug session closed (detached mode)",
         })

@@ -29,13 +29,15 @@ const OWASP_EVENT_KEY = "owasp_event"
  * @param {Record<string, unknown>} [metadata] Extra fields (e.g. `description`).
  */
 function logEvent(event, level, metadata = {}) {
+  // Spread caller metadata first so the required OWASP fields below always win:
+  // metadata is supplementary and must never rewrite the event identity/severity.
   const envelope = {
+    ...metadata,
     datetime: new Date().toISOString(),
     type: "security",
     appid: APPID,
     event,
     level,
-    ...metadata,
   }
   for (const key of Object.keys(envelope)) {
     if (envelope[key] === undefined || envelope[key] === null) {
