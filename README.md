@@ -280,3 +280,24 @@ If you want to continue a workflow and you are inside a tmate session, just crea
 ## Connection string / URL is not visible
 
 The connection string will be written in the logs every 5 seconds. For more information checkout issue [#1](https://github.com/mxschmitt/action-tmate/issues/1).
+
+## Security event logging
+
+This action emits [OWASP](https://owasp.org/)-structured security events to the
+GitHub Actions run log so that opening a debug session (a remote-access surface)
+leaves an audit trail. Each event is a single JSON line nested under an
+`owasp_event` key, with the following schema: a UTC (RFC3339 `Z`) `datetime`,
+`type: "security"`, `appid: "canonical.action-tmate"`, an OWASP `event`
+identifier, and a `level`.
+
+| Event | When |
+|-------|------|
+| `sys_startup:<actor>` | A debug session is opened and the SSH relay becomes reachable. |
+| `sys_shutdown:<actor>` | The debug session is closed (normally, detached, or via a cancellation signal). |
+| `authz_fail:<actor>,no_registered_key` | `limit-access-to-actor` is strict and the triggering actor has no registered SSH key, so the session is denied. |
+
+`<actor>` is the GitHub actor that triggered the run. Connectivity-check sessions
+are excluded, since they create and immediately terminate a session. The events
+are written at info level; the OWASP severity is carried in the envelope's
+`level` field rather than as a GitHub annotation. Forwarding the run log onward
+to a SIEM is the responsibility of the CI/runner platform.
