@@ -1,0 +1,28 @@
+name: Sigma rules validation
+
+on:
+  pull_request:
+    paths:
+      - 'docs/security/sigma/**'
+      - '.github/workflows/sigma_lint.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  sigma-lint:
+    name: Sigma rules validation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install sigma-cli
+        run: python -m pip install sigma-cli
+
+      - name: Validate Sigma detection rules
+        run: sigma check docs/security/sigma/action-tmate/

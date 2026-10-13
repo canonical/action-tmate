@@ -301,3 +301,6 @@ are excluded, since they create and immediately terminate a session. The events
 are written at info level; the OWASP severity is carried in the envelope's
 `level` field rather than as a GitHub annotation. Forwarding the run log onward
 to a SIEM is the responsibility of the CI/runner platform.
+
+Vendor-neutral [Sigma](https://sigmahq.io) detection rules for these events live
+in [`docs/security/sigma/action-tmate/`](docs/security/sigma/action-tmate/README.md).
